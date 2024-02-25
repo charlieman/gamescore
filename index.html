@@ -302,9 +302,13 @@
                 if (t > max_score) {
                     max_score = t;
                     total_with_max_score = total;
+                } else if (t === max_score) {
+                    total_with_max_score = null;
                 }
             });
-            total_with_max_score.style.fontWeight = 'bold';
+            if (total_with_max_score) {
+                total_with_max_score.style.fontWeight = 'bold';
+            }
         }
 
         let open_rounds = false;
