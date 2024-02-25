@@ -276,8 +276,12 @@
 
             [...players.children].forEach((player) => {
                 const rounds = player.querySelector(".rounds");
+                const total = player.querySelector(".total");
+                const t = Number(total.textContent);
                 if (rounds.lastElementChild) {
+                    const n = Number(rounds.lastElementChild.textContent);
                     rounds.removeChild(rounds.lastElementChild);
+                    total.textContent = t - n;
                 }
             });
 
