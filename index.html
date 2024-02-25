@@ -249,6 +249,7 @@
             score.textContent = n + amount;
         }
 
+        // finish round
         function addRound(event) {
             event.preventDefault();
 
@@ -263,6 +264,8 @@
                 const rounds = player.querySelector(".rounds");
                 addRoundItem(n, rounds);
             });
+
+            enboldenMaxScore();
         }
 
         function addRoundItem(text, rounds) {
@@ -285,6 +288,23 @@
                 }
             });
 
+            enboldenMaxScore();
+        }
+
+        function enboldenMaxScore() {
+            let max_score = 0;
+            let total_with_max_score = null;
+
+            [...players.children].forEach((player) => {
+                const total = player.querySelector(".total");
+                const t = Number(total.textContent);
+                total.style.fontWeight = 'normal';
+                if (t > max_score) {
+                    max_score = t;
+                    total_with_max_score = total;
+                }
+            });
+            total_with_max_score.style.fontWeight = 'bold';
         }
 
         let open_rounds = false;
