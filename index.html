@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+        content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0" />
+    <meta name="description" content="Track scores in your board games" />
+    <style>
+        body {
+            font-size: 16px;
+            font-family: system-ui, Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.15;
+            margin: 0;
+            background: black;
+            color: white;
+        }
+
+        button,
+        input {
+            font-family: inherit;
+            font-size: 100%;
+            line-height: 1.15;
+            margin: 0;
+        }
+
+        details {
+            padding: 4px 10px;
+        }
+
+        summary,
+        .headers {
+            display: grid;
+            grid-template-columns: 2fr 4fr 1fr 1fr;
+            gap: 4px;
+        }
+
+        h1 {
+            display: inline-block;
+            margin: 5px 2px;
+        }
+
+        h2 {
+            margin: 5px 2px;
+        }
+
+        .bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .tools {
+            display: grid;
+            place-content: end;
+            grid-auto-flow: column;
+            gap: 4px;
+        }
+
+        .tools button {
+            padding: 10px;
+        }
+
+        .add-player {
+            margin-top: 25px;
+        }
+
+        .name {
+            font-size: 1.5rem;
+        }
+
+        .name button {
+            background: transparent;
+            border: none;
+            text-align: left;
+        }
+
+        .score-form {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .score {
+            font-size: 1.5rem;
+            text-align: right;
+        }
+
+        .total {
+            font-size: 2rem;
+            text-align: right;
+        }
+
+        .rounds {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 10px;
+            justify-content: end;
+            margin: 10px 0 0;
+        }
+
+        .round {
+            padding: 2px;
+            border: 1px solid white;
+            text-align: right;
+            background: #00000091;
+            color: white;
+            border-radius: 2px;
+        }
+
+        .tools.bottom {
+            margin-top: 10px;
+        }
+
+        .add-player {
+            display: inline-block;
+        }
+
+        .center-cell {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .left-cell {
+            overflow: hidden;
+        }
+
+        .left-cell button {
+            white-space: nowrap;
+        }
+
+        h2.center-cell {
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="bar">
+            <h1>Track scores</h1>
+            <div class="tools">
+                <button type="button" onclick="resetScore(event)">Reset</button>
+                <button type="button" onclick="toggleRounds(event)">Toggle Rounds</button>
+            </div>
+        </div>
+        <div class="headers">
+            <h2 class="left-cell">Player</h2>
+            <span></span>
+            <h2 class="center-cell">Score</h2>
+            <h2 class="center-cell">Total</h2>
+        </div>
+        <div id="players"></div>
+        <div class="tools bottom">
+            <button type="button" onclick="removeRound(event)">Remove Last Round</button>
+            <button type="button" onclick="addRound(event)">Add Round</button>
+        </div>
+        <form id="add_player_form" action="" onsubmit="addPlayerSubmit(event)" class="add-player">
+            <h2>Add Player</h2>
+            <input type="text" name="name" id="add_player_name" placeholder="Name" />
+            <input type="color" name="color" id="add_player_color" value="" />
+            <button type="submit">Add Player</button>
+        </form>
+    </div>
+
+    <template id="new_player_template">
+        <details>
+            <summary>
+                <form action="" class="name center-cell left-cell" onsubmit="noop(event)">
+                    <button type="button" onclick="editName(event)">C</button>
+                    <input type="text" name="name" class="name_inline_input" value="C" style="display: none"
+                        onblur="updateName(event)" onkeyup="checkKey(event)" />
+                </form>
+                <form action="" class="score-form">
+                    <button type="button" onclick="addPoints(event, -10)">-10</button>
+                    <button type="button" onclick="addPoints(event, -1)">-1</button>
+                    <button type="button" onclick="addPoints(event, 1)">+1</button>
+                    <button type="button" onclick="addPoints(event, 10)">+10</button>
+                </form>
+                <span class="score center-cell">0</span>
+                <span class="total center-cell">0</span>
+            </summary>
+            <div class="rounds"></div>
+        </details>
+    </template>
+    <template id="round_template">
+        <span class="round"></span>
+    </template>
+
+    <script>
+        // [background, foreground]
+        const colors = [
+            ["#0000FF", "#F2F2F2"],
+            ["#FFA500", "#0A0A0A"],
+            ["#006600", "#FFFFFF"],
+            ["#FF6666", "#000000"],
+            ["#800080", "#FAFAFA"],
+            ["#FFFF00", "#0D0D0D"],
+            ["#FFC0CB", "#1C1C1C"],
+            ["#005757", "#F7F7F7"],
+        ];
+
+        let next_color = 0;
+        let current_color = undefined;
+        const total_colors = colors.length;
+        function nextColor() {
+            current_color = next_color;
+            add_player_color.value = colors[current_color][0];
+            next_color = (next_color + 1) % total_colors;
+        }
+
+        let next_letter = 'A';
+        function nextLetter() {
+            add_player_name.value = next_letter;
+            if (next_letter === 'Z') {
+                return;
+            }
+            next_letter = String.fromCharCode(next_letter.charCodeAt(0) + 1)
+        }
+
+        nextColor();
+        nextLetter();
+
+        function addPlayerSubmit(event) {
+            event?.preventDefault();
+
+            const data = new FormData(add_player_form);
+            const foreground = colors[current_color][1]; // TODO: automate foreground color?
+            addNewPlayer(add_player_form.name.value, foreground, add_player_form.color.value);
+            nextColor();
+            nextLetter();
+        }
+
+        function addNewPlayer(name, color, background) {
+            const player_content = new_player_template.content.cloneNode(true);
+            player_content.querySelector(".name button").textContent = name;
+            player_content.querySelector(".name input").value = name;
+            player_content.querySelector("details").style.backgroundColor = background;
+            player_content.querySelector("details").style.color = color;
+            players.append(player_content);
+        }
+
+        function addPoints(event, amount) {
+            event.preventDefault();
+
+            const score = event.target.closest("summary").querySelector(".score");
+            const n = Number(score.textContent);
+            score.textContent = n + amount;
+        }
+
+        function addRound(event) {
+            event.preventDefault();
+
+            [...players.children].forEach((player) => {
+                const score = player.querySelector(".score");
+                const total = player.querySelector(".total");
+                const n = Number(score.textContent);
+                const t = Number(total.textContent);
+                total.textContent = t + n;
+                score.textContent = 0;
+
+                const rounds = player.querySelector(".rounds");
+                addRoundItem(n, rounds);
+            });
+        }
+
+        function addRoundItem(text, rounds) {
+            const round_content = round_template.content.cloneNode(true);
+            round_content.querySelector(".round").textContent = text;
+            rounds.append(round_content);
+        }
+
+        function removeRound(event) {
+            event.preventDefault();
+
+            [...players.children].forEach((player) => {
+                const rounds = player.querySelector(".rounds");
+                if (rounds.lastElementChild) {
+                    rounds.removeChild(rounds.lastElementChild);
+                }
+            });
+
+        }
+
+        let open_rounds = false;
+        function toggleRounds(event) {
+            event.preventDefault();
+
+            open_rounds = !open_rounds;
+            [...players.children].forEach((player) => player.open = open_rounds);
+        }
+
+        function resetScore(event) {
+            [...players.children].forEach((player) => {
+                const score = player.querySelector(".score");
+                const total = player.querySelector(".total");
+                const rounds = player.querySelector(".rounds");
+
+                score.textContent = 0;
+                total.textContent = 0;
+                rounds.textContent = "";
+            });
+        }
+
+        function editName(event) {
+            event.preventDefault();
+
+            const form = event.target.closest("form");
+            toggleInlineNameDisplay(form, true);
+            const name_input = form.querySelector("input[name=name]");
+            name_input.focus();
+            name_input.select();
+        }
+
+        function updateName(event) {
+            event.preventDefault();
+
+            const form = event.target.closest("form");
+            const button = form.querySelector("button")
+            const name_input = form.querySelector("input[name=name]");
+            if (button.textContent != name_input.value) {
+                button.textContent = name_input.value;
+            }
+
+            toggleInlineNameDisplay(form, false);
+
+        }
+
+        function checkKey(event) {
+            if (event.keyCode === 13) { // Enter
+                event.target.blur()
+                return;
+            }
+            if (event.keyCode === 27) { // Escape
+                const form = event.target.closest("form");
+                const button = form.querySelector("button")
+                const name_input = form.querySelector("input[name=name]");
+                name_input.value = button.textContent;
+                event.target.blur();
+                return;
+            }
+        }
+
+        function toggleInlineNameDisplay(form, showInput) {
+            const button = form.querySelector("button")
+            const name_input = form.querySelector("input[name=name]");
+            button.style.display = showInput ? "none" : "block";
+            name_input.style.display = showInput ? "block" : "none";
+        }
+
+        function noop(event) {
+            event?.preventDefault();
+        }
+
+        [1, 2, 3].forEach(() => addPlayerSubmit());
+    </script>
+</body>
+
+</html>
