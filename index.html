@@ -155,15 +155,10 @@
         </div>
         <div id="players"></div>
         <div class="tools bottom">
+            <button type="button" onclick="addPlayer(event)">Add Player</button>
             <button type="button" onclick="removeRound(event)">Remove Last Round</button>
             <button type="button" onclick="addRound(event)">Finish Round</button>
         </div>
-        <form id="add_player_form" action="" onsubmit="addPlayerSubmit(event)" class="add-player">
-            <h2>Add Player</h2>
-            <input type="text" name="name" id="add_player_name" placeholder="Name" />
-            <input type="color" name="color" id="add_player_color" value="" />
-            <button type="submit">Add Player</button>
-        </form>
     </div>
 
     <template id="new_player_template">
@@ -204,34 +199,26 @@
         ];
 
         let next_color = 0;
-        let current_color = undefined;
         const total_colors = colors.length;
-        function nextColor() {
-            current_color = next_color;
-            add_player_color.value = colors[current_color][0];
+        function nextColors() {
+            const current_color = next_color;
             next_color = (next_color + 1) % total_colors;
+            return colors[current_color];
         }
 
-        let next_letter = 'A';
-        function nextLetter() {
-            add_player_name.value = next_letter;
-            if (next_letter === 'Z') {
-                return;
-            }
-            next_letter = String.fromCharCode(next_letter.charCodeAt(0) + 1)
+        let next_number = 1;
+        function nextNumber() {
+            const current_number = next_number;
+            next_number += 1;
+            return current_number;
         }
 
-        nextColor();
-        nextLetter();
-
-        function addPlayerSubmit(event) {
+        function addPlayer(event) {
             event?.preventDefault();
 
-            const data = new FormData(add_player_form);
-            const foreground = colors[current_color][1]; // TODO: automate foreground color?
-            addNewPlayer(add_player_form.name.value, foreground, add_player_form.color.value);
-            nextColor();
-            nextLetter();
+            const [background, foreground] = nextColors();
+            const player_name = "Player " + nextNumber();
+            addNewPlayer(player_name, foreground, background);
         }
 
         function addNewPlayer(name, color, background) {
@@ -355,7 +342,7 @@
             event?.preventDefault();
         }
 
-        [1, 2, 3].forEach(() => addPlayerSubmit());
+        [1, 2, 3].forEach(() => addPlayer());
     </script>
 </body>
 
