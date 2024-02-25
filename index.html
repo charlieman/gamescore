@@ -157,11 +157,20 @@
         </div>
         <div id="players"></div>
         <div class="tools bottom">
-            <button type="button" onclick="addPlayer(event)">Add Player</button>
+            <button type="button" onclick="showResetDialog(event)">Reset Scores</button>
             <button type="button" onclick="removeRound(event)">Remove Last Round</button>
             <button type="button" onclick="addRound(event)">Finish Round</button>
         </div>
     </div>
+
+    <dialog id="resetDialog">
+        <p>This will reset round scores and total scores.</p>
+        <form method="dialog">
+            <button value="cancel">Cancel</button>
+            <button onclick="resetScore(event)">Continue</button>
+        </form>
+    </dialog>
+
 
     <template id="new_player_template">
         <details>
@@ -280,6 +289,12 @@
 
             open_rounds = !open_rounds;
             [...players.children].forEach((player) => player.open = open_rounds);
+        }
+
+        function showResetDialog(event) {
+            event.preventDefault();
+
+            resetDialog.showModal();
         }
 
         function resetScore(event) {
