@@ -25,7 +25,7 @@
         }
 
         details {
-            padding: 4px 10px;
+            padding: 10px;
         }
 
         summary,
@@ -38,6 +38,7 @@
         h1 {
             display: inline-block;
             margin: 5px 2px;
+            font-size: 1.7rem;
         }
 
         h2 {
@@ -46,7 +47,7 @@
 
         .bar {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 2fr;
             gap: 10px;
             justify-content: space-between;
         }
@@ -59,7 +60,7 @@
         }
 
         .tools button {
-            padding: 10px;
+            padding: 10px 5px;
         }
 
         .add-player {
@@ -99,6 +100,7 @@
             gap: 10px;
             justify-content: end;
             margin: 10px 0 0;
+            min-height: 1.6rem;
         }
 
         .round {
@@ -143,7 +145,7 @@
         <div class="bar">
             <h1>Track scores</h1>
             <div class="tools">
-                <button type="button" onclick="resetScore(event)">Reset</button>
+                <button type="button" onclick="addPlayer(event)">🙋 Add Player</button>
                 <button type="button" onclick="toggleRounds(event)">👁️ Toggle Rounds</button>
             </div>
         </div>
